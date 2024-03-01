@@ -136,6 +136,7 @@ def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y
         wandb.log({"average_precision": average_precision})
         wandb.sklearn.plot_precision_recall(y_test, y_probas)
 
+        # Matriz de confusión
         cm = confusion_matrix(true_labels, predictions)
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
         disp.plot()
