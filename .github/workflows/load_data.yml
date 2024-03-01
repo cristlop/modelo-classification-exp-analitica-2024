@@ -12,19 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
-      id: setup
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
         cache: 'pip'
     - name: Install dependencies
-      #if: steps.setup.outputs.cache-hit != 'true'  
       run: |
+        echo "Instalando dependencias..."
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install scikit-learn  # Agrega la instalación de scikit-learn
+        echo "Instalación de dependencias completa."
     - name: Login to WandB
-      run: wandb login ${{ secrets.WANDB_API_KEY }}
+      run: |
+        echo "Iniciando sesión en WandB..."
+        wandb login ${{ secrets.WANDB_API_KEY }}
+        echo "Inicio de sesión exitoso."
     - name: Run load.py
-      run: python src/data/load.py --IdExecution ${{ github.run_number }}
+      run: |
+        echo "Ejecutando load.py..."
+        python src/data/load.py --IdExecution ${{ github.run_number }}
