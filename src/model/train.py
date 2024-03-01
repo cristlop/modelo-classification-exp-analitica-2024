@@ -95,7 +95,7 @@ def train_and_log(config, experiment_id='99'):
         model_config = model_artifact.metadata
         config.update(model_config)
 
-        model = Classifier(**model_config)
+        model = Classifier(**model_config)  # Asegúrate de tener la clase Classifier definida
         model.load_state_dict(torch.load(model_path))
         model = model.to(device)
  
