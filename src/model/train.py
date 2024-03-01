@@ -13,7 +13,7 @@ import argparse
 import wandb
 import numpy as np
 
-# Cargar dataset
+# Cargar datos
 wbcd = load_breast_cancer()
 feature_names = wbcd.feature_names
 labels = wbcd.target_names
@@ -54,17 +54,22 @@ def train(model, train_loader, valid_loader, config):
             example_ct += len(data)
 
             if batch_idx % config.batch_log_interval == 0:
-                # Imprime información sobre la pérdida durante el entrenamiento
+                # Imprimir información sobre la pérdida durante el entrenamiento
                 print('Train Epoch: {} [{}/{} ({:.0%})]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.dataset),
                     batch_idx / len(train_loader), loss.item()))
                 
-                # Registra pérdida en Weights & Biases
+                # Registrar la pérdida en Weights & Biases
                 train_log(loss, example_ct, epoch)
 
-        # Evalua el modelo en el conjunto de validación en cada etapa
+        # Evaluar el modelo en el conjunto de validación en cada época
         loss, accuracy = test(model, valid_loader)  
         test_log(loss, accuracy, example_ct, epoch)
+
+    # Visualizaciones en Weights & Biases después del entrenamiento
+    wandb.sklearn.plot_class_proportions(y_train, y_test, labels)
+    wandb.sklearn.plot_roc(y_test, y_probas, labels)
+    wandb.sklearn.plot_precision_recall(y_test, y_probas, labels)
 
 def test(model, test_loader):
     # Evaluar el modelo en el conjunto de prueba
@@ -86,7 +91,7 @@ def test(model, test_loader):
     return test_loss, accuracy
 
 def train_log(loss, example_ct, epoch):
-    # Registra la pérdida de entrenamiento en Weights & Biases
+    # Registrar la pérdida de entrenamiento en Weights & Biases
     loss = float(loss)
     wandb.log({"epoch": epoch, "train/loss": loss}, step=example_ct)
     print(f"Loss after " + str(example_ct).zfill(5) + f" examples: {loss:.3f}")
@@ -99,7 +104,7 @@ def test_log(loss, accuracy, example_ct, epoch):
     print(f"Loss/accuracy after " + str(example_ct).zfill(5) + f" examples: {loss:.3f}/{accuracy:.3f}")
 
 def evaluate(model, test_loader):
-    # Evalua el modelo en el conjunto de prueba y obtener ejemplos difíciles
+    # Evaluar el modelo en el conjunto de prueba y obtener ejemplos difíciles
     loss, accuracy = test(model, test_loader)
     highest_losses, hardest_examples, true_labels, predictions = get_hardest_k_examples(model, test_loader.dataset)
     return loss, accuracy, highest_losses, hardest_examples, true_labels, predictions
@@ -134,7 +139,7 @@ def get_hardest_k_examples(model, testing_set, k=32):
     return highest_k_losses, hardest_k_examples, true_labels, predicted_labels
 
 def train_and_log(config, experiment_id='99'):
-    # Entrena el modelo y registrar información en Weights & Biases
+    # Entrenar el modelo y registrar información en Weights & Biases
     with wandb.init(
         project="MLOps-mod-classification-2024", 
         name=f"Train Model ExecId-{args.IdExecution} ExperimentId-{experiment_id}", 
@@ -179,3 +184,16 @@ def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y
     with wandb.init(project="MLOps-mod-classification-2024", name=f"Eval Model ExecId-{args.IdExecution} Experiment-{experiment_id}"):
         data = run.use_artifact('mnist-preprocess:latest')
         data
+
+        # Evaluación del modelo
+        loss, accuracy, highest_losses, hardest_examples, true_labels, predictions = evaluate(model, test_loader)
+
+        # Visualizaciones en Weights & Biases después de la evaluación
+        wandb.sklearn.plot_roc(y_test, y_probas, labels)
+        wandb.sklearn.plot_precision_recall(y_test, y_probas, labels)
+        wandb.sklearn.plot_confusion_matrix(true_labels, predictions, labels)
+
+        # Registrar métricas en Weights & Biases
+        wandb.log({"test/loss": loss, "test/accuracy": accuracy})
+
+    return loss, accuracy, highest_losses, hardest_examples, true_labels, predictions
