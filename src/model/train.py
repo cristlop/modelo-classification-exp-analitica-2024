@@ -1,17 +1,12 @@
 import torch
 import torch.nn.functional as F
-from torch import nn 
-from torch.utils.data import TensorDataset
-from torch.utils.data import DataLoader
+from torch.utils.data import TensorDataset, DataLoader
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import RocCurveDisplay, PrecisionRecallDisplay
-from sklearn.utils import class_weight
+from sklearn.metrics import roc_curve, precision_recall_curve, auc, average_precision_score, confusion_matrix, ConfusionMatrixDisplay
 import os
-import argparse
 import wandb
-import numpy as np
 
 # Cargar datos
 wbcd = load_breast_cancer()
@@ -24,39 +19,34 @@ X_train, X_test, y_train, y_test = train_test_split(wbcd.data, wbcd.target, test
 model = RandomForestClassifier()
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
-y_probas = model.predict_proba(X_test)
+y_probas = model.predict_proba(X_test)[:, 1]  # Probabilidad de clase positiva
 
 # Configuración del dispositivo (GPU o CPU)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print("Device: ", device)
 
 def read(data_dir, split):
-    # Leer datos desde un directorio y cargarlos como un objeto TensorDataset
     filename = split + ".pt"
     x, y = torch.load(os.path.join(data_dir, filename))
     return TensorDataset(x, y)
 
 def train_log(loss, example_ct, epoch):
-    # Registrar la pérdida de entrenamiento en Weights & Biases
     loss = float(loss)
     wandb.log({"epoch": epoch, "train/loss": loss}, step=example_ct)
     print(f"Loss after " + str(example_ct).zfill(5) + f" examples: {loss:.3f}")
 
 def test_log(loss, accuracy, example_ct, epoch):
-    # Registrar la pérdida y la precisión de validación en Weights & Biases
     loss = float(loss)
     accuracy = float(accuracy)
     wandb.log({"epoch": epoch, "validation/loss": loss, "validation/accuracy": accuracy}, step=example_ct)
     print(f"Loss/accuracy after " + str(example_ct).zfill(5) + f" examples: {loss:.3f}/{accuracy:.3f}")
 
 def evaluate(model, test_loader):
-    # Evaluar el modelo en el conjunto de prueba y obtener ejemplos difíciles
     loss, accuracy = test(model, test_loader)
     highest_losses, hardest_examples, true_labels, predictions = get_hardest_k_examples(model, test_loader.dataset)
     return loss, accuracy, highest_losses, hardest_examples, true_labels, predictions
 
 def get_hardest_k_examples(model, testing_set, k=32):
-    # Obtener los k ejemplos más difíciles del conjunto de prueba
     model.eval()
     loader = DataLoader(testing_set, 1, shuffle=False)
     losses = None
@@ -85,7 +75,6 @@ def get_hardest_k_examples(model, testing_set, k=32):
     return highest_k_losses, hardest_k_examples, true_labels, predicted_labels
 
 def train_and_log(config, experiment_id='99'):
-    # Entrenar el modelo y registrar información en Weights & Biases
     with wandb.init(
         project="MLOps-mod-classification-2024", 
         name=f"Train Model ExecId-{args.IdExecution} ExperimentId-{experiment_id}", 
@@ -126,9 +115,8 @@ def train_and_log(config, experiment_id='99'):
     return model
 
 def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y_test=None):
-    # Evaluar el modelo y registrar la evaluación en Weights & Biases
     with wandb.init(project="MLOps-mod-classification-2024", name=f"Eval Model ExecId-{args.IdExecution} Experiment-{experiment_id}"):
-        data = wandb.use_artifact('mnist-preprocess:latest')  # Corregir el uso de wandb en lugar de run
+        data = wandb.use_artifact('mnist-preprocess:latest')
         data_dir = data.download()
 
         testing_dataset = read(data_dir, "testing")
@@ -138,11 +126,21 @@ def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y
         loss, accuracy, highest_losses, hardest_examples, true_labels, predictions = evaluate(model, test_loader)
 
         # Visualizaciones en Weights & Biases después de la evaluación
-        wandb.sklearn.plot_roc(y_test, y_probas, labels)
-        wandb.sklearn.plot_precision_recall(y_test, y_probas, labels)
-        wandb.sklearn.plot_confusion_matrix(true_labels, predictions, labels)
+        fpr, tpr, _ = roc_curve(y_test, y_probas)
+        roc_auc = auc(fpr, tpr)
+        wandb.log({"roc_auc": roc_auc})
+        wandb.sklearn.plot_roc(y_test, y_probas)
 
-        # Registrar métricas en Weights & Biases
+        precision, recall, _ = precision_recall_curve(y_test, y_probas)
+        average_precision = average_precision_score(y_test, y_probas)
+        wandb.log({"average_precision": average_precision})
+        wandb.sklearn.plot_precision_recall(y_test, y_probas)
+
+        cm = confusion_matrix(true_labels, predictions)
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
+        disp.plot()
+        wandb.log({"confusion_matrix": wandb.Image(disp.plot().figure_)})
+
         wandb.log({"test/loss": loss, "test/accuracy": accuracy})
 
     return loss, accuracy, highest_losses, hardest_examples, true_labels, predictions
