@@ -66,11 +66,11 @@ def get_hardest_k_examples(model, testing_set, k=32):
                 losses = torch.cat((losses, loss.view((1, 1))), 0)
                 predictions = torch.cat((predictions, pred), 0)
 
-    argsort_loss = torch.argsort(losses, dim=0).cpu()
-    highest_k_losses = losses[argsort_loss[-k:]]
-    hardest_k_examples = testing_set[argsort_loss[-k:]][0]
-    true_labels = testing_set[argsort_loss[-k:]][1]
-    predicted_labels = predictions[argsort_loss[-k:]]
+    argsort_loss = torch.argsort(losses, dim=0, descending=True)
+    highest_k_losses = losses[argsort_loss[:k]]
+    hardest_k_examples = testing_set[argsort_loss[:k]][0]
+    true_labels = testing_set[argsort_loss[:k]][1]
+    predicted_labels = predictions[argsort_loss[:k]]
 
     return highest_k_losses, hardest_k_examples, true_labels, predicted_labels
 
@@ -140,7 +140,7 @@ def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y
         cm = confusion_matrix(true_labels, predictions)
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
         disp.plot()
-        wandb.log({"confusion_matrix": wandb.Image(disp.plot().figure_)})
+        wandb.log({"confusion_matrix": wandb.Image(disp.figure_)})  # Corregir el acceso a la figura
 
         wandb.log({"test/loss": loss, "test/accuracy": accuracy})
 
