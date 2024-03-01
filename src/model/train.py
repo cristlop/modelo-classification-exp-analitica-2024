@@ -36,60 +36,6 @@ def read(data_dir, split):
     x, y = torch.load(os.path.join(data_dir, filename))
     return TensorDataset(x, y)
 
-def train(model, train_loader, valid_loader, config):
-    # Configuración del optimizador según la configuración proporcionada
-    optimizer = getattr(torch.optim, config.optimizer)(model.parameters())
-    model.train()
-    example_ct = 0
-    for epoch in range(config.epochs):
-        for batch_idx, (data, target) in enumerate(train_loader):
-            # Mover datos y etiquetas al dispositivo (GPU o CPU)
-            data, target = data.to(device), target.to(device)
-            data = data.view(data.shape[0], -1)
-            optimizer.zero_grad()
-            output = model(data)
-            loss = F.cross_entropy(output, target)
-            loss.backward()
-            optimizer.step()
-            example_ct += len(data)
-
-            if batch_idx % config.batch_log_interval == 0:
-                # Imprimir información sobre la pérdida durante el entrenamiento
-                print('Train Epoch: {} [{}/{} ({:.0%})]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * len(data), len(train_loader.dataset),
-                    batch_idx / len(train_loader), loss.item()))
-                
-                # Registrar la pérdida en Weights & Biases
-                train_log(loss, example_ct, epoch)
-
-        # Evaluar el modelo en el conjunto de validación en cada época
-        loss, accuracy = test(model, valid_loader)  
-        test_log(loss, accuracy, example_ct, epoch)
-
-    # Visualizaciones en Weights & Biases después del entrenamiento
-    wandb.sklearn.plot_class_proportions(y_train, y_test, labels)
-    wandb.sklearn.plot_roc(y_test, y_probas, labels)
-    wandb.sklearn.plot_precision_recall(y_test, y_probas, labels)
-
-def test(model, test_loader):
-    # Evaluar el modelo en el conjunto de prueba
-    model.eval()
-    test_loss = 0
-    correct = 0
-    with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
-            data = data.view(data.shape[0], -1)
-            output = model(data)
-            test_loss += F.cross_entropy(output, target, reduction='sum')
-            pred = output.argmax(dim=1, keepdim=True)
-            correct += pred.eq(target.view_as(pred)).sum()
-
-    test_loss /= len(test_loader.dataset)
-    accuracy = 100. * correct / len(test_loader.dataset)
-    
-    return test_loss, accuracy
-
 def train_log(loss, example_ct, epoch):
     # Registrar la pérdida de entrenamiento en Weights & Biases
     loss = float(loss)
@@ -145,7 +91,7 @@ def train_and_log(config, experiment_id='99'):
         name=f"Train Model ExecId-{args.IdExecution} ExperimentId-{experiment_id}", 
         job_type="train-model", config=config) as run:
         config = wandb.config
-        data = run.use_artifact('mnist-preprocess:latest')
+        data = wandb.use_artifact('mnist-preprocess:latest')
         data_dir = data.download()
 
         training_dataset =  read(data_dir, "training")
@@ -182,10 +128,13 @@ def train_and_log(config, experiment_id='99'):
 def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y_test=None):
     # Evaluar el modelo y registrar la evaluación en Weights & Biases
     with wandb.init(project="MLOps-mod-classification-2024", name=f"Eval Model ExecId-{args.IdExecution} Experiment-{experiment_id}"):
-        data = run.use_artifact('mnist-preprocess:latest')
-        data
+        data = wandb.use_artifact('mnist-preprocess:latest')  # Corregir el uso de wandb en lugar de run
+        data_dir = data.download()
 
-        # Evaluación del modelo
+        testing_dataset = read(data_dir, "testing")
+        test_loader = DataLoader(testing_dataset, batch_size=config.batch_size)
+
+        # Evaluar el modelo
         loss, accuracy, highest_losses, hardest_examples, true_labels, predictions = evaluate(model, test_loader)
 
         # Visualizaciones en Weights & Biases después de la evaluación
