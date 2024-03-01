@@ -4,9 +4,11 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import roc_curve, precision_recall_curve, auc, average_precision_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import roc_curve, auc, average_precision_score, confusion_matrix, ConfusionMatrixDisplay
 import os
 import wandb
+import matplotlib
+matplotlib.use("agg")  # Configuración del backend para gráficos de Matplotlib
 import matplotlib.pyplot as plt
 
 # Cargar datos
@@ -117,25 +119,16 @@ def train_and_log(config, experiment_id='99'):
 
 def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y_test=None):
     with wandb.init(project="MLOps-mod-classification-2024", name=f"Eval Model ExecId-{args.IdExecution} Experiment-{experiment_id}"):
-        data = wandb.use_artifact('mnist-preprocess:latest')
-        data_dir = data.download()
-
-        testing_dataset = read(data_dir, "testing")
-        test_loader = DataLoader(testing_dataset, batch_size=config.batch_size)
-
-        # Evaluar el modelo
-        loss, accuracy, highest_losses, hardest_examples, true_labels, predictions = evaluate(model, test_loader)
+        # Resto del código...
 
         # Visualizaciones en Weights & Biases después de la evaluación
         fpr, tpr, _ = roc_curve(y_test, y_probas)
         roc_auc = auc(fpr, tpr)
-        wandb.log({"roc_auc": roc_auc})
-        wandb.sklearn.plot_roc(y_test, y_probas)
-
+        wandb.log({"roc_auc": roc_auc, "roc_curve": wandb.plot.roc_curve(y_test, y_probas)})
+        
         precision, recall, _ = precision_recall_curve(y_test, y_probas)
         average_precision = average_precision_score(y_test, y_probas)
-        wandb.log({"average_precision": average_precision})
-        wandb.sklearn.plot_precision_recall(y_test, y_probas)
+        wandb.log({"average_precision": average_precision, "precision_recall_curve": wandb.plot.precision_recall_curve(y_test, y_probas)})
 
         # Matriz de confusión
         cm = confusion_matrix(true_labels, predictions)
