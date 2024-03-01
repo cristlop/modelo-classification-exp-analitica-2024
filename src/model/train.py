@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, precision_recall_curve, auc, average_precision_score, confusion_matrix, ConfusionMatrixDisplay
 import os
 import wandb
+import matplotlib.pyplot as plt
 
 # Cargar datos
 wbcd = load_breast_cancer()
@@ -140,7 +141,12 @@ def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y
         cm = confusion_matrix(true_labels, predictions)
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
         disp.plot()
-        wandb.log({"confusion_matrix": wandb.Image(disp.figure_)})  # Corregir el acceso a la figura
+
+        # Guardar la figura de la matriz de confusión
+        plt.savefig("confusion_matrix.png")
+
+        # Registrar la imagen en WandB
+        wandb.log({"confusion_matrix": wandb.Image("confusion_matrix.png")})
 
         wandb.log({"test/loss": loss, "test/accuracy": accuracy})
 
