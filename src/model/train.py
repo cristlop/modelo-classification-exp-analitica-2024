@@ -3,11 +3,8 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import wandb
-from sklearn.utils import class_weight
 from sklearn.metrics import roc_curve, auc, average_precision_score
-from sklearn.metrics import precision_recall_curve, confusion_matrix, ConfusionMatrixDisplay
-from sklearn.model_selection import learning_curve
-import matplotlib.pyplot as plt
+from sklearn.metrics import precision_recall_curve
 
 # Cargar datos
 wbcd = load_breast_cancer()
@@ -34,10 +31,14 @@ wandb.sklearn.plot_class_proportions(y_train, y_test, labels)
 # Visualizar curva de aprendizaje
 wandb.sklearn.plot_learning_curve(model, X_train, y_train)
 
-# Visualizar curva ROC
+# Calcular la curva ROC
 fpr, tpr, _ = roc_curve(y_test, y_probas)
 roc_auc = auc(fpr, tpr)
-wandb.log({"roc_auc": roc_auc, "roc_curve": wandb.plot.roc_curve(y_test, y_probas)})
+
+# Registrar la curva ROC y el área bajo la curva en Weights & Biases
+roc_curve_plot = wandb.plot.roc_curve(y_test, y_probas)
+roc_curve_dict = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "thresholds": _.tolist()}
+wandb.log({"roc_auc": roc_auc, "roc_curve": roc_curve_dict})
 
 # Calcular la curva Precisión-Recall usando scikit-learn
 precision, recall, thresholds_pr = precision_recall_curve(y_test, y_probas)
@@ -46,7 +47,7 @@ precision, recall, thresholds_pr = precision_recall_curve(y_test, y_probas)
 pr_data = [
     {"precision": p, "recall": r, "thresholds": th} for p, r, th in zip(precision, recall, thresholds_pr)
 ]
-wandb.log({"average_precision": average_precision, "precision_recall_curve": pr_data})
+wandb.log({"average_precision": average_precision_score(y_test, y_probas), "precision_recall_curve": pr_data})
 
 # Visualizar importancia de características
 importances = model.feature_importances_
