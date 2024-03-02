@@ -3,10 +3,8 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import wandb
-from sklearn.utils import class_weight
 from sklearn.metrics import roc_curve, auc, average_precision_score
 from sklearn.metrics import precision_recall_curve, confusion_matrix, ConfusionMatrixDisplay
-from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
 
 # Load data
@@ -33,10 +31,14 @@ wandb.sklearn.plot_class_proportions(y_train, y_test, labels)
 # Plot learning curve
 wandb.sklearn.plot_learning_curve(model, X_train, y_train)
 
-# Plot ROC curve
-fpr, tpr, _ = roc_curve(y_test, y_probas)
-roc_auc = auc(fpr, tpr)
-wandb.log({"roc_auc": roc_auc, "roc_curve": wandb.plot.roc_curve(y_test, y_probas)})
+# Calculate ROC curve using scikit-learn
+fpr, tpr, thresholds = roc_curve(y_test, y_probas)
+
+# Register ROC curve in Weights & Biases
+roc_data = [
+    {"fpr": f, "tpr": t, "thresholds": th} for f, t, th in zip(fpr, tpr, thresholds)
+]
+wandb.log({"roc_curve": roc_data})
 
 # Plot Precision-Recall curve
 precision, recall, _ = precision_recall_curve(y_test, y_probas)
