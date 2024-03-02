@@ -53,10 +53,13 @@ importances = model.feature_importances_
 indices = np.argsort(importances)[::-1]
 wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 
+y_pred = (y_probas > 0.5).astype(int)
+
 # Visualizar evaluación del clasificador
 wandb.sklearn.plot_classifier(model,
                               X_train, X_test,
                               y_train, y_test,
+                              y_pred, y_probas,  # Agregar y_pred y y_probas aquí
                               model_name='RandomForest',
                               labels=labels,
                               is_binary=True)
