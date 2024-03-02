@@ -39,12 +39,19 @@ threshold = 0.5
 y_test_binary = (y_test > threshold).astype(int)
 
 # Calcular la curva ROC
-fpr, tpr, _ = roc_curve(y_test_binary, y_probas)
+fpr, tpr, thresholds = roc_curve(y_test_binary, y_probas)
+
+# Calcular el área bajo la curva ROC
 roc_auc = auc(fpr, tpr)
 
+# Registrar la curva ROC en Weights & Biases
+roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas, labels=labels)
+wandb.log({"ROC_Curve": roc_chart, "roc_auc": roc_auc})
+
 # Imprimir información para depuración
-print("Curva ROC - fpr:", fpr)
-print("Curva ROC - tpr:", tpr)
+print("Curva ROC - fpr:", fpr.tolist())
+print("Curva ROC - tpr:", tpr.tolist())
+print("Curva ROC - thresholds:", thresholds.tolist())
 
 # Guardar los datos de la curva ROC
 roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": roc_auc}
