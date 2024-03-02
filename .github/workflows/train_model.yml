@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'src/model/train.py'
+      - 'src/model/*'
 
 jobs:
   train_model:
@@ -25,8 +25,8 @@ jobs:
         pip install scikit-learn --upgrade  # Actualiza scikit-learn
     - name: Set Matplotlib backend
       run: |
-        echo "backend: agg" > matplotlibrc
-        export MPLCONFIGDIR=$GITHUB_WORKSPACE
+        echo "backend: agg" > src/model/matplotlibrc
+        export MPLCONFIGDIR=$GITHUB_WORKSPACE/src/model
     - name: Login to WandB
       run: wandb login ${{ secrets.WANDB_API_KEY }}
     - name: Run train.py
