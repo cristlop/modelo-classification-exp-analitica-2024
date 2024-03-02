@@ -3,9 +3,8 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import wandb
-from sklearn.metrics import roc_curve, auc, average_precision_score, precision_recall_curve, confusion_matrix
+from sklearn.metrics import roc_curve, auc, average_precision_score, precision_recall_curve, confusion_matrix, plot_confusion_matrix
 import matplotlib.pyplot as plt
-from sklearn.metrics import plot_confusion_matrix as sklearn_plot_confusion_matrix
 
 # Cargar datos
 wbcd = load_breast_cancer()
@@ -48,16 +47,6 @@ roc_auc = auc(fpr, tpr)
 print("Curva ROC - fpr:", fpr)
 print("Curva ROC - tpr:", tpr)
 
-# Plotear la curva ROC directamente
-plt.figure()
-roc_curve_chart = plt.plot(fpr, tpr, label='ROC curve (area = {:.2f})'.format(roc_auc))
-plt.plot([0, 1], [0, 1], 'k--')  # Línea diagonal
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver Operating Characteristic (ROC) Curve')
-plt.legend(loc='best')
-plt.show()
-
 # Guardar los datos de la curva ROC
 roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": roc_auc}
 
@@ -85,12 +74,25 @@ wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 
 y_pred = (y_probas > 0.5).astype(int)
 
-# Visualizar evaluación del clasificador
+# Visualizar la matriz de confusión
 plt.figure()
-confusion_matrix_chart = sklearn_plot_confusion_matrix(model, X_test, y_test_binary)
+confusion_matrix_chart = plot_confusion_matrix(model, X_test, y_test_binary)
 plt.title('Matriz de confusión')
 plt.show()
 wandb.log({"Confusion_Matrix": confusion_matrix_chart})
+
+# Utilizar wandb.sklearn.plot_roc para la curva ROC
+roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas, labels=labels)
+wandb.log({"Curva ROC": roc_chart})
+
+# Visualizar evaluación del clasificador
+wandb.sklearn.plot_classifier(model,
+                              X_train, X_test,
+                              y_train, y_test,
+                              y_pred, y_probas,  # Agregar y_pred y y_probas aquí
+                              model_name='RandomForest',
+                              labels=labels,
+                              is_binary=True)
 
 # Finalizar corrida en W&B
 wandb.finish()
