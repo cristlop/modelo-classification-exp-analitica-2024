@@ -43,9 +43,11 @@ y_test_binary = (y_test > threshold).astype(int)
 fpr, tpr, _ = roc_curve(y_test_binary, y_probas)
 roc_auc = auc(fpr, tpr)
 
-# Registrar la curva ROC y el área bajo la curva en Weights & Biases
-roc_curve_plot = wandb.plot.roc_curve(y_test_binary, y_probas, labels=[str(i) for i in range(len(np.unique(y_test_binary)))])
-wandb.log({"roc_auc": roc_auc, "roc_curve": roc_curve_plot})
+# Guardar los datos de la curva ROC
+roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": roc_auc}
+
+# Registrar los datos en Weights & Biases
+wandb.log({"roc_curve": roc_curve_data})
 
 # Calcular la curva Precisión-Recall usando scikit-learn
 precision, recall, thresholds_pr = precision_recall_curve(y_test, y_probas)
