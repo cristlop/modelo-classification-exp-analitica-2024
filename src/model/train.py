@@ -11,11 +11,6 @@ import matplotlib
 matplotlib.use("agg")  # Configuración del backend para gráficos de Matplotlib
 import matplotlib.pyplot as plt
 
-
-
-# Configuración del backend de Matplotlib
-plt.switch_backend('agg')
-
 # Cargar datos
 wbcd = load_breast_cancer()
 feature_names = wbcd.feature_names
@@ -147,12 +142,8 @@ def evaluate_and_log(experiment_id='99', config=None, model=None, X_test=None, y
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
         disp.plot()
 
-        # Guardar la figura de la matriz de confusión en un directorio específico de WandB
-        wandb_save_path = "/mnt/data/wandb/wandb_images/confusion_matrix.png"  # Reemplaza con la ruta correcta
-        plt.savefig(wandb_save_path)
-
         # Registrar la imagen en WandB
-        wandb.log({"confusion_matrix": wandb.Image(wandb_save_path)})
+        wandb.log({"confusion_matrix": wandb.Image(plt)})
 
         wandb.log({"test/loss": loss, "test/accuracy": accuracy})
 
