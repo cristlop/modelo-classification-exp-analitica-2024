@@ -39,7 +39,7 @@ threshold = 0.5
 y_test_binary = (y_test > threshold).astype(int)
 
 # Calcular la curva ROC
-fpr, tpr, thresholds = roc_curve(y_test_binary, y_probas[:, 1])  # Tomar las probabilidades de la clase positiva
+fpr, tpr, thresholds = roc_curve(y_test_binary, y_probas[:, 1])  # Probabilidad de la clase positiva
 
 # Registrar la curva ROC en Weights & Biases
 roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas[:, 1], labels=labels)
@@ -60,9 +60,9 @@ wandb.log({"roc_curve": roc_curve_data})
 precision, recall, thresholds_pr = precision_recall_curve(y_test_binary, y_probas[:, 1])
 
 # Imprimir información para depuración
-print("Curva Precisión-Recall - precision:", precision)
-print("Curva Precisión-Recall - recall:", recall)
-print("Curva Precisión-Recall - thresholds:", thresholds_pr)
+print("Curva Precisión-Recall - precision:", precision.tolist())
+print("Curva Precisión-Recall - recall:", recall.tolist())
+print("Curva Precisión-Recall - thresholds:", thresholds_pr.tolist())
 
 # Registrar datos de la curva Precisión-Recall en Weights & Biases
 pr_data = [
