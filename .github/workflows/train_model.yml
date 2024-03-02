@@ -25,7 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-        pip install wandb==0.16.3 scikit-learn --upgrade  # Actualizar wandb y scikit-learn
+        pip install wandb==0.16.3 scikit-learn>=0.22.0 --upgrade  # Actualizar wandb y scikit-learn
 
     - name: Show installed packages
       run: pip freeze
@@ -34,9 +34,6 @@ jobs:
       run: |
         echo "backend: agg" > src/model/matplotlibrc
         export MPLCONFIGDIR=$GITHUB_WORKSPACE/src/model
-
-    - name: Install scikit-learn
-      run: python -m pip install scikit-learn
 
     - name: Login to WandB
       run: wandb login ${{ secrets.WANDB_API_KEY }}
