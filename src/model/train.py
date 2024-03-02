@@ -40,12 +40,13 @@ threshold = 0.5
 y_test_binary = (y_test > threshold).astype(int)
 
 # Calcular la curva ROC
-fpr, tpr, _ = roc_curve(y_test_binary, y_probas)
+fpr, tpr, thresholds_roc = roc_curve(y_test_binary, y_probas)
 roc_auc = auc(fpr, tpr)
 
 # Imprimir información para depuración
 print("Curva ROC - fpr:", fpr)
 print("Curva ROC - tpr:", tpr)
+print("Curva ROC - thresholds:", thresholds_roc)
 
 # Guardar los datos de la curva ROC
 roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": roc_auc}
