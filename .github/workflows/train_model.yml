@@ -24,7 +24,9 @@ jobs:
         pip install -r requirements.txt
         pip install scikit-learn --upgrade  # Actualiza scikit-learn
     - name: Set Matplotlib backend
-      run: echo "backend: agg" > matplotlibrc
+      run: |
+        echo "backend: agg" > matplotlibrc
+        export MPLCONFIGDIR=$GITHUB_WORKSPACE
     - name: Login to WandB
       run: wandb login ${{ secrets.WANDB_API_KEY }}
     - name: Run train.py
