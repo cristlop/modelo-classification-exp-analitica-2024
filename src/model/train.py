@@ -67,7 +67,7 @@ wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 y_pred = (y_probas > 0.5).astype(int)
 
 # Utilizar wandb.sklearn.plot_roc para la curva ROC
-wandb.sklearn.plot_roc(y_test, y_probas, labels)
+wandb.sklearn.plot_roc(y_test_binary, y_probas)
 
 # Visualizar evaluación del clasificador
 wandb.sklearn.plot_classifier(model,
