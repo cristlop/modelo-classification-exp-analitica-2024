@@ -11,7 +11,6 @@ import matplotlib
 matplotlib.use("agg")  # Configuración del backend para gráficos de Matplotlib
 import matplotlib.pyplot as plt
 
-
 # Cargar datos
 wbcd = load_breast_cancer()
 feature_names = wbcd.feature_names
@@ -22,7 +21,6 @@ X_train, X_test, y_train, y_test = train_test_split(wbcd.data, wbcd.target, test
 # Entrenar modelo y obtener predicciones
 model = RandomForestClassifier()
 model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
 y_probas = model.predict_proba(X_test)[:, 1]  # Probabilidad de clase positiva
 
 # Configuración del dispositivo (GPU o CPU)
@@ -99,18 +97,18 @@ def train_and_log(config, experiment_id='99'):
         model_config = model_artifact.metadata
         config.update(model_config)
 
-        model = Classifier(**model_config)  # Asegúrate de tener la clase Classifier definida
-        model.load_state_dict(torch.load(model_path))
-        model = model.to(device)
- 
+        model = RandomForestClassifier()  # Modifica según tu implementación
+        model.fit(X_train, y_train)  # Ajusta el entrenamiento según tu implementación
+
         train(model, train_loader, validation_loader, config)
 
+        # Guardar el modelo como un artefacto
         model_artifact = wandb.Artifact(
             "trained-model", type="model",
-            description="Trained NN model",
+            description="Trained RandomForest model",
             metadata=dict(model_config))
 
-        torch.save(model.state_dict(), "trained_model.pth")
+        torch.save(model, "trained_model.pth")
         model_artifact.add_file("trained_model.pth")
         wandb.save("trained_model.pth")
 
