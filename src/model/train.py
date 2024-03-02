@@ -5,7 +5,6 @@ from sklearn.ensemble import RandomForestClassifier
 import wandb
 from sklearn.metrics import roc_curve, auc, average_precision_score
 from sklearn.metrics import precision_recall_curve
-import matplotlib.pyplot as plt
 
 # Cargar datos
 wbcd = load_breast_cancer()
@@ -44,6 +43,10 @@ y_test_binary = (y_test > threshold).astype(int)
 fpr, tpr, _ = roc_curve(y_test_binary, y_probas)
 roc_auc = auc(fpr, tpr)
 
+# Imprimir información para depuración
+print("Curva ROC - fpr:", fpr)
+print("Curva ROC - tpr:", tpr)
+
 # Guardar los datos de la curva ROC
 roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": roc_auc}
 
@@ -52,6 +55,11 @@ wandb.log({"roc_curve": roc_curve_data})
 
 # Calcular la curva Precisión-Recall usando scikit-learn
 precision, recall, thresholds_pr = precision_recall_curve(y_test, y_probas)
+
+# Imprimir información para depuración
+print("Curva Precisión-Recall - precision:", precision)
+print("Curva Precisión-Recall - recall:", recall)
+print("Curva Precisión-Recall - thresholds:", thresholds_pr)
 
 # Registrar datos de la curva Precisión-Recall en Weights & Biases
 pr_data = [
@@ -67,7 +75,7 @@ wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 y_pred = (y_probas > 0.5).astype(int)
 
 # Utilizar wandb.sklearn.plot_roc para la curva ROC
-wandb.sklearn.plot_roc(y_test_binary, y_probas)
+wandb.sklearn.plot_roc(y_test_binary, y_probas, labels)
 
 # Visualizar evaluación del clasificador
 wandb.sklearn.plot_classifier(model,
