@@ -23,13 +23,17 @@ y_probas = model.predict_proba(X_test)[:, 1]  # Probabilidad de la clase positiv
 nombre_proyecto = "MLOps-mod-classification-2024"
 
 # Inicializar la corrida en W&B
-wandb.init(project=nombre_proyecto, name="classification")
+run = wandb.init(project=nombre_proyecto, name="classification")
 
 # Visualizar proporciones de clase
 wandb.sklearn.plot_class_proportions(y_train, y_test, labels)
 
 # Visualizar curva de aprendizaje
 wandb.sklearn.plot_learning_curve(model, X_train, y_train)
+
+# Imprimir información sobre y_test
+print("y_test shape:", y_test.shape)
+print("y_test values:", y_test)
 
 # Calcular la curva ROC
 fpr, tpr, _ = roc_curve(y_test, y_probas)
