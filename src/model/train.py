@@ -7,7 +7,6 @@ from sklearn.metrics import roc_curve, auc, average_precision_score
 from sklearn.metrics import precision_recall_curve
 import matplotlib.pyplot as plt
 
-
 # Cargar datos
 wbcd = load_breast_cancer()
 feature_names = wbcd.feature_names
