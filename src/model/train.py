@@ -75,7 +75,8 @@ wandb.sklearn.plot_classifier(model,
                               y_pred, y_probas,  # Agregar y_pred y y_probas aquí
                               model_name='RandomForest',
                               labels=labels,
-                              is_binary=True)
+                              is_binary=True,
+                              roc_curve_labels=[str(i) for i in range(len(labels))])
 
 # Finalizar corrida en W&B
 wandb.finish()
