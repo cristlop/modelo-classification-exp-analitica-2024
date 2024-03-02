@@ -54,7 +54,7 @@ roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": roc_auc}
 wandb.log({"roc_curve": roc_curve_data})
 
 # Calcular la curva Precisión-Recall usando scikit-learn
-precision, recall, thresholds_pr = precision_recall_curve(y_test, y_probas)
+precision, recall, thresholds_pr = precision_recall_curve(y_test_binary, y_probas)
 
 # Imprimir información para depuración
 print("Curva Precisión-Recall - precision:", precision)
@@ -65,7 +65,7 @@ print("Curva Precisión-Recall - thresholds:", thresholds_pr)
 pr_data = [
     {"precision": p, "recall": r, "thresholds": th} for p, r, th in zip(precision, recall, thresholds_pr)
 ]
-wandb.log({"average_precision": average_precision_score(y_test, y_probas), "precision_recall_curve": pr_data})
+wandb.log({"average_precision": average_precision_score(y_test_binary, y_probas), "precision_recall_curve": pr_data})
 
 # Visualizar importancia de características
 importances = model.feature_importances_
@@ -74,8 +74,9 @@ wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 
 y_pred = (y_probas > 0.5).astype(int)
 
-# Utilizar wandb.plot.roc para la curva ROC
-wandb.plot.roc(y_test_binary, y_probas, labels=labels)
+# Utilizar wandb.sklearn.plot_roc para la curva ROC
+roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas, labels=labels)
+wandb.log({"Curva ROC": roc_chart})
 
 # Visualizar evaluación del clasificador
 wandb.sklearn.plot_classifier(model,
