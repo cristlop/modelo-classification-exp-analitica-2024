@@ -45,7 +45,7 @@ fpr, tpr, thresholds = roc_curve(y_test_binary, y_probas)
 roc_auc = auc(fpr, tpr)
 
 # Registrar la curva ROC en Weights & Biases
-roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas, labels=labels)
+roc_chart = wandb.sklearn.plot_roc(y_test_binary.reshape(-1, 1), y_probas.reshape(-1, 1), labels=labels)
 wandb.log({"ROC_Curve": roc_chart, "roc_auc": roc_auc})
 
 # Imprimir información para depuración
