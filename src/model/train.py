@@ -5,7 +5,6 @@ from sklearn.ensemble import RandomForestClassifier
 import wandb
 from sklearn.metrics import roc_curve, auc, average_precision_score
 from sklearn.metrics import precision_recall_curve
-import matplotlib.pyplot as plt
 
 # Cargar datos
 wbcd = load_breast_cancer()
@@ -44,15 +43,6 @@ y_test_binary = (y_test > threshold).astype(int)
 fpr, tpr, _ = roc_curve(y_test_binary, y_probas)
 roc_auc = auc(fpr, tpr)
 
-# Visualizar la curva ROC usando matplotlib
-plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = {:.2f})'.format(roc_auc))
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver Operating Characteristic (ROC) Curve')
-plt.legend(loc="lower right")
-
 # Guardar los datos de la curva ROC
 roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": roc_auc}
 
@@ -74,6 +64,8 @@ indices = np.argsort(importances)[::-1]
 wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 
 y_pred = (y_probas > 0.5).astype(int)
+
+# No utilizar wandb.sklearn.plot_classifier para la curva ROC
 
 # Visualizar evaluación del clasificador
 wandb.sklearn.plot_classifier(model,
