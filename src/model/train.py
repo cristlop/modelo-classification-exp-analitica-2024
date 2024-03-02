@@ -12,6 +12,7 @@ matplotlib.use("agg")  # Configuración del backend para gráficos de Matplotlib
 import matplotlib.pyplot as plt
 
 
+
 # Configuración del backend de Matplotlib
 plt.switch_backend('agg')
 
