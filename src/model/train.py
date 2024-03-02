@@ -16,7 +16,7 @@ X_train, X_test, y_train, y_test = train_test_split(wbcd.data, wbcd.target, test
 # Entrenar modelo y obtener predicciones
 model = RandomForestClassifier()
 model.fit(X_train, y_train)
-y_probas = model.predict_proba(X_test)[:, 1]  # Probabilidad de la clase positiva
+y_probas = model.predict_proba(X_test)
 
 # Configuración
 nombre_proyecto = "MLOps-mod-classification-2024"
@@ -39,14 +39,11 @@ threshold = 0.5
 y_test_binary = (y_test > threshold).astype(int)
 
 # Calcular la curva ROC
-fpr, tpr, thresholds = roc_curve(y_test_binary, y_probas)
-
-# Calcular el área bajo la curva ROC
-roc_auc = auc(fpr, tpr)
+fpr, tpr, thresholds = roc_curve(y_test_binary, y_probas[:, 1])  # Tomar las probabilidades de la clase positiva
 
 # Registrar la curva ROC en Weights & Biases
-roc_chart = wandb.sklearn.plot_roc(y_test_binary.reshape(-1, 1), y_probas.reshape(-1, 1), labels=labels)
-wandb.log({"ROC_Curve": roc_chart, "roc_auc": roc_auc})
+roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas[:, 1], labels=labels)
+wandb.log({"ROC_Curve": roc_chart})
 
 # Imprimir información para depuración
 print("Curva ROC - fpr:", fpr.tolist())
@@ -54,13 +51,13 @@ print("Curva ROC - tpr:", tpr.tolist())
 print("Curva ROC - thresholds:", thresholds.tolist())
 
 # Guardar los datos de la curva ROC
-roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": roc_auc}
+roc_curve_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "roc_auc": auc(fpr, tpr)}
 
 # Registrar los datos en Weights & Biases
 wandb.log({"roc_curve": roc_curve_data})
 
 # Calcular la curva Precisión-Recall usando scikit-learn
-precision, recall, thresholds_pr = precision_recall_curve(y_test_binary, y_probas)
+precision, recall, thresholds_pr = precision_recall_curve(y_test_binary, y_probas[:, 1])
 
 # Imprimir información para depuración
 print("Curva Precisión-Recall - precision:", precision)
@@ -71,14 +68,14 @@ print("Curva Precisión-Recall - thresholds:", thresholds_pr)
 pr_data = [
     {"precision": p, "recall": r, "thresholds": th} for p, r, th in zip(precision, recall, thresholds_pr)
 ]
-wandb.log({"average_precision": average_precision_score(y_test_binary, y_probas), "precision_recall_curve": pr_data})
+wandb.log({"average_precision": average_precision_score(y_test_binary, y_probas[:, 1]), "precision_recall_curve": pr_data})
 
 # Visualizar importancia de características
 importances = model.feature_importances_
 indices = np.argsort(importances)[::-1]
 wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 
-y_pred = (y_probas > 0.5).astype(int)
+y_pred = (y_probas[:, 1] > 0.5).astype(int)
 
 # Calcular la matriz de confusión
 conf_matrix = confusion_matrix(y_test_binary, y_pred)
@@ -91,14 +88,14 @@ print(conf_matrix)
 wandb.log({"Confusion_Matrix": conf_matrix})
 
 # Utilizar wandb.sklearn.plot_roc para la curva ROC
-roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas, labels=labels)
+roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas[:, 1], labels=labels)
 wandb.log({"Curva ROC": roc_chart})
 
 # Visualizar evaluación del clasificador
 wandb.sklearn.plot_classifier(model,
                               X_train, X_test,
                               y_train, y_test,
-                              y_pred, y_probas,  # Agregar y_pred y y_probas aquí
+                              y_pred, y_probas[:, 1],  # Agregar y_pred y y_probas aquí
                               model_name='RandomForest',
                               labels=labels,
                               is_binary=True)
