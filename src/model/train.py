@@ -11,7 +11,6 @@ import matplotlib
 matplotlib.use("agg")  # Configuración del backend para gráficos de Matplotlib
 import matplotlib.pyplot as plt
 
-
 # Cargar datos
 wbcd = load_breast_cancer()
 feature_names = wbcd.feature_names
