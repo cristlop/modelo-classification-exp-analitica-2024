@@ -32,12 +32,11 @@ wandb.sklearn.plot_class_proportions(y_train, y_test, labels)
 wandb.sklearn.plot_learning_curve(model, X_train, y_train)
 
 # Calcular la curva ROC
-fpr, tpr, _ = roc_curve(y_test, y_probas)
+fpr, tpr, thresholds = roc_curve(y_test, y_probas)
 roc_auc = auc(fpr, tpr)
 
 # Registrar la curva ROC y el área bajo la curva en Weights & Biases
-roc_curve_plot = wandb.plot.roc_curve(y_test, y_probas)
-roc_curve_dict = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "thresholds": _.tolist()}
+roc_curve_dict = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "thresholds": thresholds.tolist()}
 wandb.log({"roc_auc": roc_auc, "roc_curve": roc_curve_dict})
 
 # Calcular la curva Precisión-Recall usando scikit-learn
