@@ -3,54 +3,57 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import wandb
+from sklearn.utils import class_weight
 from sklearn.metrics import roc_curve, auc, average_precision_score
 from sklearn.metrics import precision_recall_curve, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
 
-# Load data
+# Cargar datos
 wbcd = load_breast_cancer()
 feature_names = wbcd.feature_names
 labels = wbcd.target_names
 
+# Dividir datos en conjuntos de entrenamiento y prueba
 X_train, X_test, y_train, y_test = train_test_split(wbcd.data, wbcd.target, test_size=0.2)
 
-# Train model, get predictions
+# Entrenar modelo y obtener predicciones
 model = RandomForestClassifier()
 model.fit(X_train, y_train)
-y_probas = model.predict_proba(X_test)[:, 1]  # Probability of positive class
+y_probas = model.predict_proba(X_test)[:, 1]  # Probabilidad de la clase positiva
 
-# Configuration
-project_name = "MLOps-mod-classification-2024"
+# Configuración
+nombre_proyecto = "MLOps-mod-classification-2024"
 
-# Initialize W&B run
-run = wandb.init(project=project_name, name="classification")
+# Inicializar la corrida en W&B
+run = wandb.init(project=nombre_proyecto, name="classification")
 
-# Plot class proportions
+# Visualizar proporciones de clase
 wandb.sklearn.plot_class_proportions(y_train, y_test, labels)
 
-# Plot learning curve
+# Visualizar curva de aprendizaje
 wandb.sklearn.plot_learning_curve(model, X_train, y_train)
 
-# Calculate ROC curve using scikit-learn
-fpr, tpr, thresholds = roc_curve(y_test, y_probas)
+# Visualizar curva ROC
+fpr, tpr, _ = roc_curve(y_test, y_probas)
+roc_auc = auc(fpr, tpr)
+wandb.log({"roc_auc": roc_auc, "roc_curve": wandb.plot.roc_curve(y_test, y_probas)})
 
-# Register ROC curve in Weights & Biases
-roc_data = [
-    {"fpr": f, "tpr": t, "thresholds": th} for f, t, th in zip(fpr, tpr, thresholds)
+# Calcular la curva Precisión-Recall usando scikit-learn
+precision, recall, thresholds_pr = precision_recall_curve(y_test, y_probas)
+
+# Registrar datos de la curva Precisión-Recall en Weights & Biases
+pr_data = [
+    {"precision": p, "recall": r, "thresholds": th} for p, r, th in zip(precision, recall, thresholds_pr)
 ]
-wandb.log({"roc_curve": roc_data})
+wandb.log({"average_precision": average_precision, "precision_recall_curve": pr_data})
 
-# Plot Precision-Recall curve
-precision, recall, _ = precision_recall_curve(y_test, y_probas)
-average_precision = average_precision_score(y_test, y_probas)
-wandb.log({"average_precision": average_precision, "precision_recall_curve": wandb.plot.precision_recall_curve(y_test, y_probas)})
-
-# Plot feature importances
+# Visualizar importancia de características
 importances = model.feature_importances_
 indices = np.argsort(importances)[::-1]
 wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 
-# Plot classifier evaluation
+# Visualizar evaluación del clasificador
 wandb.sklearn.plot_classifier(model,
                               X_train, X_test,
                               y_train, y_test,
@@ -58,5 +61,5 @@ wandb.sklearn.plot_classifier(model,
                               labels=labels,
                               is_binary=True)
 
-# Finish W&B run
+# Finalizar corrida en W&B
 wandb.finish()
