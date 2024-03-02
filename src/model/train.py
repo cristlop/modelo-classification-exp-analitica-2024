@@ -3,8 +3,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import wandb
-from sklearn.metrics import roc_curve, auc, average_precision_score, precision_recall_curve, confusion_matrix, plot_confusion_matrix
-import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc, average_precision_score, precision_recall_curve, confusion_matrix
 
 # Cargar datos
 wbcd = load_breast_cancer()
@@ -74,12 +73,15 @@ wandb.sklearn.plot_feature_importances(model, feature_names=feature_names)
 
 y_pred = (y_probas > 0.5).astype(int)
 
-# Visualizar la matriz de confusión
-plt.figure()
-confusion_matrix_chart = plot_confusion_matrix(model, X_test, y_test_binary)
-plt.title('Matriz de confusión')
-plt.show()
-wandb.log({"Confusion_Matrix": confusion_matrix_chart})
+# Calcular la matriz de confusión
+conf_matrix = confusion_matrix(y_test_binary, y_pred)
+
+# Imprimir información para depuración
+print("Matriz de Confusión:")
+print(conf_matrix)
+
+# Registrar la matriz de confusión en Weights & Biases
+wandb.log({"Confusion_Matrix": conf_matrix})
 
 # Utilizar wandb.sklearn.plot_roc para la curva ROC
 roc_chart = wandb.sklearn.plot_roc(y_test_binary, y_probas, labels=labels)
