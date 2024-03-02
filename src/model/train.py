@@ -3,8 +3,9 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import wandb
-from sklearn.metrics import roc_curve, auc, average_precision_score, precision_recall_curve, plot_roc_curve, plot_confusion_matrix
+from sklearn.metrics import roc_curve, auc, average_precision_score, precision_recall_curve, confusion_matrix
 import matplotlib.pyplot as plt
+from sklearn.metrics import plot_confusion_matrix as sklearn_plot_confusion_matrix
 
 # Cargar datos
 wbcd = load_breast_cancer()
@@ -49,8 +50,12 @@ print("Curva ROC - tpr:", tpr)
 
 # Plotear la curva ROC directamente
 plt.figure()
-roc_curve_chart = plot_roc_curve(model, X_test, y_test_binary)
-plt.title('Curva ROC')
+roc_curve_chart = plt.plot(fpr, tpr, label='ROC curve (area = {:.2f})'.format(roc_auc))
+plt.plot([0, 1], [0, 1], 'k--')  # Línea diagonal
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc='best')
 plt.show()
 
 # Guardar los datos de la curva ROC
@@ -82,7 +87,7 @@ y_pred = (y_probas > 0.5).astype(int)
 
 # Visualizar evaluación del clasificador
 plt.figure()
-confusion_matrix_chart = plot_confusion_matrix(model, X_test, y_test_binary)
+confusion_matrix_chart = sklearn_plot_confusion_matrix(model, X_test, y_test_binary)
 plt.title('Matriz de confusión')
 plt.show()
 wandb.log({"Confusion_Matrix": confusion_matrix_chart})
