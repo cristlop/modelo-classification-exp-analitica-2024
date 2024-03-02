@@ -14,8 +14,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v4
-      id: setup
+      uses: actions/setup-python@v2
       with:
         python-version: '3.9'
         cache: 'pip'
@@ -25,7 +24,7 @@ jobs:
         pip install -r requirements.txt
         pip install scikit-learn --upgrade  # Actualiza scikit-learn
     - name: Set Matplotlib backend
-      run: echo "backend: agg" > matplotlibrc
+      run: echo "backend: agg" > $GITHUB_WORKSPACE/matplotlibrc
     - name: Login to WandB
       run: wandb login ${{ secrets.WANDB_API_KEY }}
     - name: Run train.py
